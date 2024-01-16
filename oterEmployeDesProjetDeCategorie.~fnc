@@ -1,0 +1,37 @@
+CREATE OR REPLACE FUNCTION oterEmployeDesProjet(emp_nom VARCHAR2, cat_nom VARCHAR2) RETURN VARCHAR2
+IS
+    -- Déclaration de variable pour stocker les noms de projets
+    v_projets_desaffectes VARCHAR2(4000);
+BEGIN
+    -- Déclaration de variables pour stocker les IDs
+    DECLARE
+        v_emp_no NUMBER;
+        v_cat_no NUMBER;
+    BEGIN
+        -- Récupérer l'ID de l'employé en fonction du nom
+        SELECT emp_no INTO v_emp_no
+        FROM exa_employe
+        WHERE emp_nom_prenom = emp_nom;
+
+        -- Récupérer l'ID de la catégorie en fonction du nom
+        SELECT cat_no INTO v_cat_no
+        FROM exa_categorie
+        WHERE cat_nom = cat_nom;
+
+        -- Sélectionner les noms des projets avant la suppression
+        SELECT LISTAGG(pro_nom, ', ') WITHIN GROUP (ORDER BY pro_nom)
+        INTO v_projets_desaffectes
+        FROM exa_projet
+        WHERE pro_no IN (SELECT aff_pro_no FROM exa_affectation WHERE aff_emp_no = v_emp_no);
+
+        -- Supprimer les affectations pour l'employé et la catégorie spécifiés
+        DELETE FROM exa_affectation
+        WHERE aff_emp_no = v_emp_no
+          AND aff_pro_no IN (SELECT pro_no FROM exa_projet WHERE pro_cat_no = v_cat_no);
+
+        -- Retourner les noms des projets désaffectés
+        RETURN v_projets_desaffectes;
+    END;
+END oterEmployeDesProjet;
+/
+/
